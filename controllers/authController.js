@@ -2,21 +2,28 @@ const usuariosRepository = require('../repositories/usuariosRepository');
 const Bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { AppError } = require('../utils/errorHandler');
+const { registerSchema, loginSchema } = require('../utils/userValidations');
+const { z } = require('zod');
 
 const SECRET = process.env.JWT_SECRET || 'secret';
 
 const login = async (req, res, next) => {
     try {
-        const { email, senha } = req.body;
+        const result = loginSchema.safeParse(req.body);
+        if (!result.success) {
+            throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
+        }
+
+        const { email, senha } = result.data;
 
         const usuario = await usuariosRepository.findUserByEmail(email);
         if (!usuario) {
-            throw new AppError(401, 'Email inválido');
+            throw new AppError(401, 'Credenciais inválidas');
         }
 
         const senhaValida = await Bcrypt.compare(senha, usuario.senha);
         if (!senhaValida) {
-            throw new AppError(401, 'Senha inválida');
+            throw new AppError(401, 'Credenciais inválidas');
         }
 
         const token = jwt.sign({ id: usuario.id }, SECRET, { expiresIn: '1h' });
@@ -30,8 +37,7 @@ const login = async (req, res, next) => {
         });
 
         return res.status(200).json({
-            message: "Usuario logado com sucesso",
-            token: token,
+            acess_token: token
         });
 
     } catch (error) {
@@ -41,11 +47,16 @@ const login = async (req, res, next) => {
 
 const register = async (req, res, next) => {
     try {
-        const { nome, email, senha } = req.body;
+        const result = registerSchema.safeParse(req.body);
+        if (!result.success) {
+            throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
+        }
+
+        const { nome, email, senha } = result.data;
 
         const usuarioExistente = await usuariosRepository.findUserByEmail(email);
         if (usuarioExistente) {
-            throw new AppError(409, 'Email já cadastrado');
+            throw new AppError(400, 'Email já cadastrado');
         }
 
         const salt = await Bcrypt.genSalt(10);

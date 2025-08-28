@@ -16,32 +16,28 @@ const authMiddleware = async (req, res, next) => {
             throw new AppError(401, 'Token não fornecido');
         }
 
-        // Verifica se o token é válido
-        jwt.verify(token, SECRET, async (err, decoded) => {
-            if (err) {
-                return next(new AppError(401, 'Token inválido'));
+        try {
+            const decoded = jwt.verify(token, SECRET);
+            const usuario = await usuariosRepository.findUserById(decoded.id);
+
+            if (!usuario) {
+                throw new AppError(401, 'Usuário não encontrado');
             }
 
-            try {
-                // Busca os dados completos do usuário
-                const usuario = await usuariosRepository.findUserById(decoded.id);
+            // Adiciona os dados do usuário à requisição (exceto a senha)
+            req.user = {
+                id: usuario.id,
+                nome: usuario.nome,
+                email: usuario.email
+            };
 
-                if (!usuario) {
-                    return next(new AppError(401, 'Usuário não encontrado'));
-                }
-
-                // Adiciona os dados do usuário à requisição (exceto a senha)
-                req.user = {
-                    id: usuario.id,
-                    nome: usuario.nome,
-                    email: usuario.email
-                };
-
-                next();
-            } catch (error) {
-                return next(new AppError(500, 'Erro ao validar usuário'));
+            next();
+        } catch (err) {
+            if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+                throw new AppError(401, 'Token inválido');
             }
-        });
+            throw err;
+        }
     } catch (error) {
         next(error);
     }
