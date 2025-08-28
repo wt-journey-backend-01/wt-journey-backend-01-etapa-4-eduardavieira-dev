@@ -37,7 +37,7 @@ const login = async (req, res, next) => {
         });
 
         return res.status(200).json({
-            acess_token: token
+            access_token: token
         });
 
     } catch (error) {
@@ -47,9 +47,36 @@ const login = async (req, res, next) => {
 
 const register = async (req, res, next) => {
     try {
+        // Verifica se o corpo da requisição está vazio
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new AppError(400, 'Dados inválidos', ['Corpo da requisição não pode ser vazio']);
+        }
+
         const result = registerSchema.safeParse(req.body);
         if (!result.success) {
-            throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
+            const errors = [];
+            
+            // Verifica campos extras
+            if (result.error.errors.some(e => e.code === 'unrecognized_keys')) {
+                const extraFields = result.error.errors
+                    .find(e => e.code === 'unrecognized_keys')
+                    .keys;
+                errors.push(`Campos não permitidos: ${extraFields.join(', ')}`);
+            } else {
+                // Processa outros erros de validação
+                const formattedErrors = result.error.format();
+                if (formattedErrors.nome?._errors) {
+                    errors.push(...formattedErrors.nome._errors);
+                }
+                if (formattedErrors.email?._errors) {
+                    errors.push(...formattedErrors.email._errors);
+                }
+                if (formattedErrors.senha?._errors) {
+                    errors.push(...formattedErrors.senha._errors);
+                }
+            }
+            
+            throw new AppError(400, 'Dados inválidos', errors);
         }
 
         const { nome, email, senha } = result.data;

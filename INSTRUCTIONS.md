@@ -89,7 +89,7 @@ O servidor estará rodando em `http://localhost:3000`
      {
        "nome": "Eduarda",
        "email": "eduarda@gmail.com",
-       "senha": "dudinha@123"
+       "senha": "Dudinha@1234"
      }
      ```
 
@@ -101,7 +101,7 @@ O servidor estará rodando em `http://localhost:3000`
      ```json
      {
        "email": "eduarda@gmail.com",
-       "senha": "dudinha@123"
+       "senha": "Dudinha@1234"
      }
      ```
    - Após o login, você receberá um token JWT na resposta
