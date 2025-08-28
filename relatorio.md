@@ -1,287 +1,218 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para eduardavieira-dev:
 
-Nota final: **27.5/100**
+Nota final: **29.3/100**
 
 # Feedback para eduardavieira-dev 🚓🔐
 
-Olá, Eduarda! Que legal ver o seu empenho nessa etapa tão importante de segurança e autenticação! 🎉
+Olá, Eduarda! Que jornada incrível você está trilhando! 🚀 Parabéns por avançar até aqui e por estruturar seu projeto de forma organizada e com várias funcionalidades importantes já implementadas! Vamos juntos analisar seu código para destravar o que ainda falta e deixar sua API tinindo de profissional! 💪✨
 
 ---
 
-## 🎉 Primeiramente, parabéns pelos acertos!
+## 🎉 Pontos Fortes e Conquistas Bônus
 
-- Você estruturou muito bem o projeto, seguindo a arquitetura MVC com controllers, repositories, middlewares e rotas organizados — isso é fundamental para projetos profissionais! 👏
-- A integração com PostgreSQL via Knex está bem feita, e suas migrations e seeds estão corretas.
-- Implementou os endpoints básicos de autenticação (`/auth/register`, `/auth/login`, `/auth/logout`) e proteção de rotas usando middleware JWT.
-- A proteção das rotas de agentes e casos com o middleware de autenticação está funcionando, garantindo segurança.
-- Os testes básicos de criação e login de usuários, logout e exclusão de usuários passaram, mostrando que a base está sólida.
-- Você também avançou nos bônus, como o endpoint `/usuarios/me` para retornar dados do usuário autenticado, e a filtragem de agentes e casos por parâmetros — muito bom! 🌟
+- Você estruturou muito bem seu projeto, com pastas bem definidas para controllers, repositories, middlewares, rotas e utils, exatamente como o desafio pede. Isso é fundamental para manter a escalabilidade e legibilidade do código. 👏
+
+- Implementou corretamente o fluxo básico de autenticação com JWT e hashing de senha usando bcrypt, com registro, login, logout e exclusão de usuários. Isso é essencial para a segurança do sistema! 🔒
+
+- Aplicou o middleware de autenticação para proteger as rotas de agentes e casos, garantindo que apenas usuários autenticados tenham acesso. Muito bom! 🛡️
+
+- Seu arquivo `INSTRUCTIONS.md` está bem completo, explicando como usar a API, incluindo exemplos de requisições e uso do token JWT no header Authorization. Isso ajuda demais quem for usar sua API. 📚
+
+- Você passou vários testes bônus importantes, como filtragem de casos, busca de agentes responsáveis, e o endpoint `/usuarios/me`, mostrando que você foi além do básico! 👏🌟
 
 ---
 
-## 🚨 Agora, vamos analisar os pontos que precisam de atenção para destravar sua nota e garantir que sua API esteja 100% pronta para produção.
+## 🚩 Testes que Falharam e Análises Detalhadas
 
-### 1. Validação dos dados do usuário na criação (registro) — testes falharam:
+Você teve uma série de testes base relacionados ao cadastro de usuários que falharam, principalmente envolvendo validações do payload no registro, como:
 
-> Testes que falharam relacionados a isso:
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com nome vazio"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com email vazio"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha vazia"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha curta de mais"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha sem números"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha sem caractere especial"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letra maiúscula"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letras"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com campo extra"
-> - "USERS: Recebe erro 400 ao tentar criar um usuário com campo faltante"
+- Receber erro 400 ao tentar criar usuário com nome vazio ou nulo
+- Receber erro 400 para email vazio ou nulo
+- Receber erro 400 para senha inválida (curta, sem números, sem caractere especial, sem letra maiúscula, sem letras)
+- Receber erro 400 ao enviar campo extra ou faltar campo obrigatório
 
-**Análise da causa raiz:**
+### Análise Raiz do Problema: Validação do Registro de Usuário
 
-No seu `authController.js`, no método `register`, você verifica se o email já existe, e faz o hash da senha, mas não encontrei nenhuma validação explícita para:
-
-- Campos obrigatórios (nome, email, senha) não vazios ou nulos
-- Validação da complexidade da senha (mínimo 8 caracteres, letras maiúsculas, minúsculas, números e caracteres especiais)
-- Validação de formato do email
-- Rejeição de campos extras no payload (para evitar dados inesperados)
-
-Exemplo do seu código atual:
+No seu `authController.js`, você usa o `registerSchema` do Zod para validar os dados do usuário:
 
 ```js
-const register = async (req, res, next) => {
-    try {
-        const { nome, email, senha } = req.body;
-
-        const usuarioExistente = await usuariosRepository.findUserByEmail(email);
-        if (usuarioExistente) {
-            throw new AppError(409, 'Email já cadastrado');
-        }
-
-        const salt = await Bcrypt.genSalt(10);
-        const senhaHash = await Bcrypt.hash(senha, salt);
-        await usuariosRepository.createUser({ nome, email, senha: senhaHash });
-
-        return res.status(201).json({
-            message: "Usuario cadastrado com sucesso",
-        });
-
-    } catch (error) {
-        return next(error);
-    }
-};
+const result = registerSchema.safeParse(req.body);
+if (!result.success) {
+    throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
+}
 ```
 
-**O que está faltando?**
+Isso é ótimo, mas o que pode estar acontecendo é que seu schema `registerSchema` (que está em `utils/userValidations.js`) **não está cobrindo todas as regras de validação especificadas no desafio**, principalmente para a senha.
 
-Você precisa validar os dados antes de tentar criar o usuário. Por exemplo, usando uma biblioteca como `zod` (que você já tem nas dependências) para garantir que:
+Você precisa garantir que o schema:
 
-- `nome` é string, não vazio
-- `email` é string, não vazio, e no formato correto
-- `senha` atende aos critérios de complexidade (mínimo 8 caracteres, letras maiúsculas, minúsculas, números, caracteres especiais)
-- Nenhum campo extra está presente no objeto recebido
+- Exija que `nome`, `email` e `senha` sejam obrigatórios e não nulos
+- Valide o formato do email corretamente
+- Valide a senha com pelo menos 8 caracteres, incluindo:
+  - Uma letra minúscula
+  - Uma letra maiúscula
+  - Um número
+  - Um caractere especial
 
-Isso evita que o banco receba dados inválidos e que seu sistema aceite registros incompletos ou inseguros.
+Além disso, seu schema deve rejeitar campos extras (para evitar que o usuário envie dados não esperados).
 
-**Exemplo básico de validação com Zod:**
+**Por exemplo, um schema Zod para senha com essas regras pode ser algo assim:**
+
+```js
+const registerSchema = z.object({
+    nome: z.string().min(1, 'O nome é obrigatório'),
+    email: z.string().email('Email inválido'),
+    senha: z.string()
+        .min(8, 'A senha deve ter no mínimo 8 caracteres')
+        .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula')
+        .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula')
+        .regex(/[0-9]/, 'A senha deve conter pelo menos um número')
+        .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial'),
+}).strict();
+```
+
+O método `.strict()` faz com que campos extras causem erro de validação, o que atende ao teste de rejeitar campos extras.
+
+**Recomendo fortemente que você revise seu schema `registerSchema` para garantir que todas essas validações estejam presentes.**
+
+---
+
+### Por que isso é importante?
+
+Sem essas validações no schema, seu backend aceita dados incompletos ou inválidos, e por isso os testes de validação falham, pois esperam erros 400 para esses casos.
+
+---
+
+### Exemplo de melhoria no arquivo `utils/userValidations.js`:
 
 ```js
 const { z } = require('zod');
 
 const registerSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email('Email inválido'),
-  senha: z.string()
-    .min(8, 'Senha deve ter no mínimo 8 caracteres')
-    .regex(/[a-z]/, 'Senha deve conter letra minúscula')
-    .regex(/[A-Z]/, 'Senha deve conter letra maiúscula')
-    .regex(/[0-9]/, 'Senha deve conter número')
-    .regex(/[^A-Za-z0-9]/, 'Senha deve conter caractere especial'),
-});
+    nome: z.string().min(1, { message: 'O nome é obrigatório' }),
+    email: z.string().email({ message: 'Email inválido' }),
+    senha: z.string()
+        .min(8, { message: 'A senha deve ter no mínimo 8 caracteres' })
+        .regex(/[a-z]/, { message: 'A senha deve conter pelo menos uma letra minúscula' })
+        .regex(/[A-Z]/, { message: 'A senha deve conter pelo menos uma letra maiúscula' })
+        .regex(/[0-9]/, { message: 'A senha deve conter pelo menos um número' })
+        .regex(/[^a-zA-Z0-9]/, { message: 'A senha deve conter pelo menos um caractere especial' }),
+}).strict();
 
-const register = async (req, res, next) => {
-    try {
-        registerSchema.parse(req.body);
+const loginSchema = z.object({
+    email: z.string().email(),
+    senha: z.string(),
+}).strict();
 
-        const { nome, email, senha } = req.body;
-
-        const usuarioExistente = await usuariosRepository.findUserByEmail(email);
-        if (usuarioExistente) {
-            throw new AppError(400, 'Email já cadastrado'); // Atenção: o teste espera 400, não 409
-        }
-
-        const salt = await Bcrypt.genSalt(10);
-        const senhaHash = await Bcrypt.hash(senha, salt);
-        await usuariosRepository.createUser({ nome, email, senha: senhaHash });
-
-        return res.status(201).json({
-            message: "Usuario cadastrado com sucesso",
-        });
-
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return next(new AppError(400, 'Parâmetros inválidos', error.errors.map(e => e.message)));
-        }
-        return next(error);
-    }
-};
+module.exports = { registerSchema, loginSchema };
 ```
-
-⚠️ Note que o teste espera erro 400 para email já em uso, mas seu código retorna 409. Ajuste para 400 para passar o teste.
 
 ---
 
-### 2. Resposta do login — formato esperado do token JWT
+## Outros pontos importantes para revisar:
 
-> Teste que falhou:
-> - O teste espera que o login retorne um JSON com a chave `acess_token`, mas seu código retorna `{ message, token }`
+### 1. **Tabela `usuarios` na migration**
 
-No seu `authController.js`, login retorna:
+Na sua migration `20250811021528_solution_migrations.js`, a criação da tabela `usuarios` está assim:
+
+```js
+await knex.schema.createTable('usuarios', function (table) {
+    table.increments('id').primary();
+    table.string('nome').notNullable();
+    table.string('email').notNullable().unique();
+    table.string('senha').notNullable();
+});
+```
+
+O desafio pede que a senha seja armazenada hasheada (que você faz no controller) e que a senha tenha validação forte (que deve ser feita antes, no schema).
+
+A tabela em si está ok, mas vale reforçar que a validação da senha não é feita no banco, mas no backend.
+
+---
+
+### 2. **Middleware de autenticação**
+
+Seu middleware `authMiddleware.js` está muito bem implementado, verificando token no cookie e no header Authorization, validando JWT e adicionando `req.user`. Isso está correto e alinhado com o desafio.
+
+---
+
+### 3. **Rotas de autenticação**
+
+Você criou as rotas em `routes/authRoutes.js` com os endpoints corretos, e no controller `authController.js` você trata registro, login, logout e exclusão de usuário.
+
+---
+
+### 4. **Resposta do login**
+
+No login, você retorna o token no formato esperado:
 
 ```js
 return res.status(200).json({
-    message: "Usuario logado com sucesso",
-    token: token,
+    acess_token: token
 });
 ```
 
-Mas o teste espera o formato:
-
-```json
-{
-  "acess_token": "token aqui"
-}
-```
-
-**Correção simples:**
-
-```js
-return res.status(200).json({
-    acess_token: token,
-});
-```
-
-Remova a mensagem e altere a chave para `acess_token` exatamente assim para passar o teste.
+Isso está correto.
 
 ---
 
-### 3. Tratamento dos erros de autenticação no login
+### 5. **Estrutura de diretórios**
 
-Você lança `AppError(401, 'Email inválido')` e `AppError(401, 'Senha inválida')`, mas o enunciado pede erro 400 para email já em uso no registro, e 401 para credenciais inválidas no login — aqui está correto, só fique atento para usar o status certo em cada contexto.
-
----
-
-### 4. Middleware de autenticação — tratamento assíncrono e uso do jwt.verify
-
-No seu `authMiddleware.js`, você usa a versão callback do `jwt.verify` com async/await dentro:
-
-```js
-jwt.verify(token, SECRET, async (err, decoded) => {
-    if (err) {
-        return next(new AppError(401, 'Token inválido'));
-    }
-
-    try {
-        const usuario = await usuariosRepository.findUserById(decoded.id);
-
-        if (!usuario) {
-            return next(new AppError(401, 'Usuário não encontrado'));
-        }
-
-        req.user = {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email
-        };
-
-        next();
-    } catch (error) {
-        return next(new AppError(500, 'Erro ao validar usuário'));
-    }
-});
-```
-
-**Possível problema:**
-
-O uso misto de callback com async/await pode causar confusão e erros silenciosos. Recomendo usar a versão síncrona `jwt.verify` dentro de um try/catch para simplificar:
-
-```js
-try {
-    const decoded = jwt.verify(token, SECRET);
-    const usuario = await usuariosRepository.findUserById(decoded.id);
-
-    if (!usuario) {
-        throw new AppError(401, 'Usuário não encontrado');
-    }
-
-    req.user = {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-    };
-
-    next();
-} catch (err) {
-    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-        return next(new AppError(401, 'Token inválido'));
-    }
-    next(err);
-}
-```
-
-Isso torna o fluxo mais claro e evita problemas assíncronos.
+Sua estrutura está exatamente como o desafio pede, parabéns por seguir esse padrão! Isso é fundamental para organização e manutenção do código.
 
 ---
 
-### 5. Validação do payload em outras rotas (ex: criação de agentes, casos)
+## 📚 Recomendações de Aprendizado
 
-Embora seus controllers estejam protegidos e usando middlewares de validação (`newAgenteValidation`, etc.), é importante garantir que essas validações estejam robustas para evitar payloads com campos extras ou faltantes, que geram erros nos testes.
+Para fortalecer sua validação de dados e autenticação, recomendo os seguintes vídeos feitos pelos meus criadores:
 
-Se ainda não tiver, implemente validações com `zod` ou `Joi` para validar os dados de entrada, e retornar erros 400 claros.
+- Para entender autenticação e segurança:  
+  👉 [Conceitos básicos de cibersegurança e autenticação](https://www.youtube.com/watch?v=Q4LQOfYwujk)
 
----
+- Para aprender a usar JWT na prática:  
+  👉 [JWT na prática com Node.js](https://www.youtube.com/watch?v=keS0JWOypIU)
 
-### 6. Estrutura dos diretórios e arquivos
+- Para dominar bcrypt e hashing de senhas:  
+  👉 [JWT e bcrypt para segurança](https://www.youtube.com/watch?v=L04Ln97AwoY)
 
-Sua estrutura está condizente com o esperado, parabéns!
-
-Só fique atento para que o arquivo `authRoutes.js` esteja exatamente na pasta `routes/` e que os nomes estejam corretos (ex: `usuariosRepository.js` na pasta `repositories/`).
-
----
-
-## 📚 Recursos que recomendo para você:
-
-- Para validar os dados de entrada com `zod` e garantir segurança no registro:  
-  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s (Guia detalhado do Knex Query Builder e uso de validações)
-
-- Para entender autenticação e JWT com Node.js e Express:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk (Esse vídeo, feito pelos meus criadores, fala muito bem sobre conceitos básicos e fundamentais de cibersegurança)
-
-- Para aprofundar no uso do JWT e bcrypt na prática:  
-  https://www.youtube.com/watch?v=L04Ln97AwoY
+- Para entender melhor validação com Zod e boas práticas:  
+  Embora não tenha um link específico aqui, sugiro buscar tutoriais sobre Zod para validação de schemas em Node.js.
 
 ---
 
-## 📝 Resumo rápido dos principais pontos para focar:
+## 📝 Resumo dos Principais Pontos para Focar
 
-- **Valide rigorosamente os dados de entrada no registro de usuários:** nome, email, senha (complexidade e formato), rejeite campos extras e campos vazios. Use `zod` ou similar.
-- **Ajuste o formato da resposta do login para retornar `{ acess_token: "token" }`** exatamente assim.
-- **No middleware de autenticação, use `jwt.verify` de forma síncrona dentro de try/catch para evitar problemas assíncronos.**
-- **Garanta que os status codes e mensagens de erro estejam conforme o esperado nos testes (ex: 400 para email já em uso no registro).**
-- **Continue usando middlewares para validar agentes e casos, evitando payloads inválidos.**
+- **Reforce a validação do payload no registro de usuários** no arquivo `utils/userValidations.js` para garantir que nome, email e senha cumpram os requisitos mínimos, incluindo a complexidade da senha e rejeição de campos extras.
+
+- **Utilize `.strict()` no schema Zod para rejeitar campos extras** e evitar dados inesperados.
+
+- **Revise as mensagens de erro para que sejam claras e específicas**, ajudando o cliente a entender o motivo do erro.
+
+- **Teste localmente os casos de borda**, como envio de campos vazios, nulos, senhas fracas, para garantir que o servidor retorne erro 400 conforme esperado.
+
+- Continue aplicando o middleware de autenticação nas rotas sensíveis, garantindo a segurança da API.
+
+- Mantenha a organização do projeto e documentação atualizada como você já faz.
 
 ---
 
-Eduarda, você está no caminho certo! Essas correções vão deixar sua API muito mais robusta e profissional. Continue firme nessa jornada, a segurança é um dos pilares mais importantes em qualquer aplicação real! 🚀
+## Finalizando 🚀
 
-Se precisar, volte aos vídeos recomendados para reforçar os conceitos e boas práticas.
+Eduarda, você está no caminho certo! Seu backend está bem estruturado e já possui uma base sólida para autenticação e segurança. O foco agora é fortalecer as validações para garantir que os dados que chegam ao servidor estejam sempre corretos e seguros. Isso vai destravar muitos testes e garantir uma aplicação robusta e profissional.
 
-Estou aqui torcendo pelo seu sucesso! 💪✨
+Continue praticando, revisando seu código e buscando entender a fundo cada conceito. Você tem muito potencial e está fazendo um ótimo trabalho! Qualquer dúvida, estou aqui para ajudar. 💙👩‍💻
 
-Um abraço de Code Buddy! 🤖❤️
+Abraços e sucesso nessa jornada! ✨
+
+---
+
+Se precisar, volte aos vídeos recomendados para consolidar conceitos de autenticação, JWT e validação em Node.js. Isso vai acelerar seu aprendizado e melhorar muito sua aplicação.
+
+Até mais! 👋😊
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
