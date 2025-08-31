@@ -59,14 +59,21 @@ const register = async (req, res, next) => {
             throw new AppError(400, 'Dados inválidos', [`Campos não permitidos: ${extraFields.join(', ')}`]);
         }
 
-        // Manipula os campos ausentes para garantir que erros corretos sejam gerados
-        const dados = {
-            nome: req.body.nome === undefined ? null : req.body.nome,
-            email: req.body.email === undefined ? null : req.body.email,
-            senha: req.body.senha === undefined ? null : req.body.senha
-        };
+        // Verifica campos obrigatórios ausentes
+        const camposObrigatorios = ['nome', 'email', 'senha'];
+        const camposAusentes = camposObrigatorios.filter(campo => req.body[campo] === undefined);
+        if (camposAusentes.length > 0) {
+            throw new AppError(400, 'Dados inválidos', camposAusentes.map(campo => `${campo} é obrigatório`));
+        }
 
-        const result = registerSchema.safeParse(dados);
+        // Verifica campos vazios ou nulos
+        for (const campo of camposObrigatorios) {
+            if (req.body[campo] === null || req.body[campo] === '') {
+                throw new AppError(400, 'Dados inválidos', [`${campo} não pode ser vazio ou nulo`]);
+            }
+        }
+
+        const result = registerSchema.safeParse(req.body);
         if (!result.success) {
             throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
         }

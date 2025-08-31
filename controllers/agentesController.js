@@ -1,11 +1,7 @@
 const agentesRepository = require('../repositories/agentesRepository');
 const casosRepository = require('../repositories/casosRepository');
 const { AppError } = require('../utils/errorHandler');
-
-function isValidId(id) {
-    const num = Number(id);
-    return Number.isInteger(num) && num > 0;
-}
+const { isValidId } = require('../utils/validationUtils');
 
 async function getAllAgentes(req, res) {
     const cargo = req.query.cargo;
@@ -108,7 +104,7 @@ async function getCasosByAgenteId(req, res) {
     const idNum = Number(id);
 
     if (!Number.isInteger(idNum) || idNum <= 0) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const agente = await agentesRepository.findById(idNum);
