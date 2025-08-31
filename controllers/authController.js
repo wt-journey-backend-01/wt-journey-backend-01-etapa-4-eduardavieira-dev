@@ -59,7 +59,14 @@ const register = async (req, res, next) => {
             throw new AppError(400, 'Dados inválidos', [`Campos não permitidos: ${extraFields.join(', ')}`]);
         }
 
-        const result = registerSchema.safeParse(req.body);
+        // Manipula os campos ausentes para garantir que erros corretos sejam gerados
+        const dados = {
+            nome: req.body.nome === undefined ? null : req.body.nome,
+            email: req.body.email === undefined ? null : req.body.email,
+            senha: req.body.senha === undefined ? null : req.body.senha
+        };
+
+        const result = registerSchema.safeParse(dados);
         if (!result.success) {
             throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
         }

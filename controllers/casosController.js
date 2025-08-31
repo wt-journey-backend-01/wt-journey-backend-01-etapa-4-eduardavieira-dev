@@ -14,7 +14,7 @@ async function getAllCasos(req, res) {
 
     if (agenteId) {
         if (!isValidId(agenteId)) {
-            throw new AppError(400, 'ID do agente inválido: deve ser um número inteiro positivo');
+            throw new AppError(404, 'ID do agente inválido: deve ser um número inteiro positivo');
         }
         filter.agente_id = Number(agenteId);
     }
@@ -31,7 +31,7 @@ async function getCasosById(req, res) {
     const { id } = req.params;
 
     if (!isValidId(id)) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const idNum = Number(id);
@@ -48,7 +48,7 @@ async function createCaso(req, res) {
     const { agente_id: agenteId } = req.body;
 
     if (!isValidId(agenteId)) {
-        throw new AppError(400, 'ID do agente inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID do agente inválido: deve ser um número inteiro positivo');
     }
 
     const idNum = Number(agenteId);
@@ -68,7 +68,7 @@ async function updateCaso(req, res) {
     const { agente_id: agenteId } = req.body;
 
     if (!isValidId(id)) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     if (!isValidId(agenteId)) {
@@ -98,7 +98,7 @@ async function updatePartialCaso(req, res) {
 
     // Basic ID validation for caso ID
     if (!id || !/^\d+$/.test(id)) {
-        throw new AppError(400, 'ID inválido');
+        throw new AppError(404, 'ID inválido');
     }
 
     if (req.body.id) {
@@ -130,7 +130,7 @@ async function deleteCaso(req, res) {
     const { id } = req.params;
 
     if (!isValidId(id)) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const idNum = Number(id);

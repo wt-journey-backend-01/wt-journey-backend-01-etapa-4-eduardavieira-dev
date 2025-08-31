@@ -31,7 +31,7 @@ async function getAgenteById(req, res) {
     const { id } = req.params;
 
     if (!isValidId(id)) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const idNum = Number(id);
@@ -53,7 +53,7 @@ async function updateAgente(req, res) {
     const idNum = Number(id);
 
     if (!Number.isInteger(idNum) || idNum <= 0) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const agente = await agentesRepository.findById(idNum);
@@ -69,7 +69,7 @@ async function updatePartialAgente(req, res) {
     const { id } = req.params;
 
     if (!isValidId(id)) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const idNum = Number(id);
@@ -87,7 +87,7 @@ async function deleteAgente(req, res) {
     const idNum = Number(id);
 
     if (!Number.isInteger(idNum) || idNum <= 0) {
-        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+        throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
     }
 
     const agente = await agentesRepository.findById(idNum);
