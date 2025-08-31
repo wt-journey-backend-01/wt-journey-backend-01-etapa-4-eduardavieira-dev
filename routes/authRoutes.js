@@ -13,4 +13,6 @@ router.post('/logout', authController.logout);
 // Rotas protegidas
 router.delete('/users/:id', authMiddleware, authController.deleteUser);
 
+router.get('/me', authMiddleware, authController.me);
+
 module.exports = router;

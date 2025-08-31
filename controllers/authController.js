@@ -52,31 +52,16 @@ const register = async (req, res, next) => {
             throw new AppError(400, 'Dados inválidos', ['Corpo da requisição não pode ser vazio']);
         }
 
+        // Verifica campos extras
+        const allowedFields = ['nome', 'email', 'senha'];
+        const extraFields = Object.keys(req.body).filter(key => !allowedFields.includes(key));
+        if (extraFields.length > 0) {
+            throw new AppError(400, 'Dados inválidos', [`Campos não permitidos: ${extraFields.join(', ')}`]);
+        }
+
         const result = registerSchema.safeParse(req.body);
         if (!result.success) {
-            const errors = [];
-            
-            // Verifica campos extras
-            if (result.error.errors.some(e => e.code === 'unrecognized_keys')) {
-                const extraFields = result.error.errors
-                    .find(e => e.code === 'unrecognized_keys')
-                    .keys;
-                errors.push(`Campos não permitidos: ${extraFields.join(', ')}`);
-            } else {
-                // Processa outros erros de validação
-                const formattedErrors = result.error.format();
-                if (formattedErrors.nome?._errors) {
-                    errors.push(...formattedErrors.nome._errors);
-                }
-                if (formattedErrors.email?._errors) {
-                    errors.push(...formattedErrors.email._errors);
-                }
-                if (formattedErrors.senha?._errors) {
-                    errors.push(...formattedErrors.senha._errors);
-                }
-            }
-            
-            throw new AppError(400, 'Dados inválidos', errors);
+            throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
         }
 
         const { nome, email, senha } = result.data;
@@ -96,6 +81,24 @@ const register = async (req, res, next) => {
 
     } catch (error) {
         return next(error);
+    }
+};
+
+const me = async (req, res, next) => {
+    try {
+        const usuario = await usuariosRepository.findUserById(req.user.id);
+        if (!usuario) {
+            throw new AppError(404, 'Usuário não encontrado');
+        }
+
+        // Retorna apenas os dados públicos do usuário
+        res.json({
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email
+        });
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -136,5 +139,6 @@ module.exports = {
     login,
     register,
     deleteUser,
-    logout
+    logout,
+    me
 };

@@ -2,13 +2,21 @@ const casosRepository = require('../repositories/casosRepository');
 const agentesRepository = require('../repositories/agentesRepository');
 const { AppError } = require('../utils/errorHandler');
 
+function isValidId(id) {
+    const num = Number(id);
+    return Number.isInteger(num) && num > 0;
+}
+
 async function getAllCasos(req, res) {
     const agenteId = req.query.agente_id;
     const status = req.query.status;
     const filter = {};
 
     if (agenteId) {
-        filter.agente_id = agenteId;
+        if (!isValidId(agenteId)) {
+            throw new AppError(400, 'ID do agente inválido: deve ser um número inteiro positivo');
+        }
+        filter.agente_id = Number(agenteId);
     }
 
     if (status) {
@@ -16,18 +24,18 @@ async function getAllCasos(req, res) {
     }
 
     const casos = await casosRepository.findAll(filter);
-
     res.json(casos);
 }
 
 async function getCasosById(req, res) {
-    const id = Number(req.params.id);
+    const { id } = req.params;
 
-    if (!id || !Number.isInteger(id)) {
-        throw new AppError(404, 'Id inválido');
+    if (!isValidId(id)) {
+        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
     }
 
-    const caso = await casosRepository.findById(id);
+    const idNum = Number(id);
+    const caso = await casosRepository.findById(idNum);
 
     if (!caso) {
         throw new AppError(404, 'Nenhum caso encontrado para o id especificado');
@@ -37,104 +45,123 @@ async function getCasosById(req, res) {
 }
 
 async function createCaso(req, res) {
-    const agenteId = req.body.agente_id;
+    const { agente_id: agenteId } = req.body;
 
-    if (agenteId) {
-        const agente = await agentesRepository.findById(agenteId);
+    if (!isValidId(agenteId)) {
+        throw new AppError(400, 'ID do agente inválido: deve ser um número inteiro positivo');
+    }
 
-        if (!agente) {
-            throw new AppError(404, 'Nenhum agente encontrado para o id especificado');
-        }
-    } else {
+    const idNum = Number(agenteId);
+    const agente = await agentesRepository.findById(idNum);
+
+    if (!agente) {
         throw new AppError(404, 'Nenhum agente encontrado para o id especificado');
     }
 
-    const novoCaso = await casosRepository.create(req.body);
 
+    const novoCaso = await casosRepository.create({ ...req.body, agente_id: idNum });
     res.status(201).json(novoCaso);
 }
 
 async function updateCaso(req, res) {
-    const id = req.params.id;
-    const agenteId = req.body.agente_id;
+    const { id } = req.params;
+    const { agente_id: agenteId } = req.body;
 
-    if (agenteId) {
-        const agente = await agentesRepository.findById(agenteId);
+    if (!isValidId(id)) {
+        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+    }
 
-        if (!agente) {
-            throw new AppError(404, 'Nenhum agente encontrado para o id especificado');
-        }
-    } else {
+    if (!isValidId(agenteId)) {
+        throw new AppError(400, 'ID do agente inválido: deve ser um número inteiro positivo');
+    }
+
+    const idNum = Number(id);
+    const agenteIdNum = Number(agenteId);
+
+    const agente = await agentesRepository.findById(agenteIdNum);
+    if (!agente) {
         throw new AppError(404, 'Nenhum agente encontrado para o id especificado');
     }
 
-    const caso = await casosRepository.findById(id);
-
+    const caso = await casosRepository.findById(idNum);
     if (!caso) {
         throw new AppError(404, 'Nenhum caso encontrado para o id especificado');
     }
 
-    const updatedCaso = await casosRepository.update(id, req.body);
-
+    const updatedCaso = await casosRepository.update(idNum, { ...req.body, agente_id: agenteIdNum });
     res.status(200).json(updatedCaso);
 }
 
 async function updatePartialCaso(req, res) {
     const id = req.params.id;
+    const agenteId = req.body.agente_id;
+
+    // Basic ID validation for caso ID
+    if (!id || !/^\d+$/.test(id)) {
+        throw new AppError(400, 'ID inválido');
+    }
 
     if (req.body.id) {
         throw new AppError(400, 'Parâmetros inválidos', ['O id não pode ser atualizado']);
     }
 
-    const agenteId = req.body.agente_id;
-
+    // If agente_id is provided, validate it
     if (agenteId) {
-        const agente = await agentesRepository.findById(agenteId);
+        if (!/^\d+$/.test(agenteId)) {
+            throw new AppError(400, 'ID do agente inválido');
+        }
 
+        const agente = await agentesRepository.findById(agenteId);
         if (!agente) {
             throw new AppError(404, 'Nenhum agente encontrado para o id especificado');
         }
     }
 
     const caso = await casosRepository.findById(id);
-
     if (!caso) {
         throw new AppError(404, 'Nenhum caso encontrado para o id especificado');
     }
 
     const updatedCaso = await casosRepository.updatePartial(id, req.body);
-
     res.status(200).json(updatedCaso);
 }
 
 async function deleteCaso(req, res) {
-    const id = req.params.id;
-    const caso = await casosRepository.findById(id);
+    const { id } = req.params;
+
+    if (!isValidId(id)) {
+        throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
+    }
+
+    const idNum = Number(id);
+    const caso = await casosRepository.findById(idNum);
 
     if (!caso) {
         throw new AppError(404, 'Nenhum caso encontrado para o id especificado');
     }
 
-    const result = await casosRepository.remove(id);
-
+    const result = await casosRepository.remove(idNum);
     if (!result) {
-        throw new AppError(500, 'Erro ao remover o agente');
+        throw new AppError(500, 'Erro ao remover o caso');
     }
 
     res.status(204).send();
 }
-
 async function getAgenteByCasoId(req, res) {
     const casoId = req.params.caso_id;
-    const caso = await casosRepository.findById(casoId);
 
+    // Basic ID validation for caso ID
+    if (!casoId || !/^\d+$/.test(casoId)) {
+        throw new AppError(400, 'ID do caso inválido');
+    }
+
+    const caso = await casosRepository.findById(casoId);
     if (!caso) {
         throw new AppError(404, 'Nenhum caso encontrado para o id especificado');
     }
 
     const agenteId = caso.agente_id;
     const agente = await agentesRepository.findById(agenteId);
-
     if (!agente) {
         throw new AppError(404, 'Nenhum agente encontrado para o agente_id especificado');
     }
