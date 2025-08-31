@@ -1,169 +1,210 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para eduardavieira-dev:
 
-Nota final: **70.5/100**
+Nota final: **74.9/100**
 
-Olá, Eduarda! 🌟 Que alegria poder revisar seu trabalho nesta etapa tão importante, onde a segurança e autenticação entram em cena! Antes de mais nada, parabéns pelo esforço e pela organização do seu projeto. Vamos juntos destrinchar seus acertos e os pontos que ainda podem ser aprimorados para você alcançar a excelência. 🚀
+Olá, Eduarda! 🌟
 
----
+Primeiramente, parabéns pelo empenho e pela estruturação do seu projeto! É muito legal ver como você organizou seu código seguindo a arquitetura MVC, com controllers, repositories, middlewares e rotas bem separadinhos. Isso é essencial para manter o código limpo, escalável e fácil de manter. 👏👏
 
-## 🎉 Pontos Fortes e Conquistas Bônus
+Também quero destacar que você conseguiu implementar corretamente várias funcionalidades importantes, como o cadastro e login de usuários, geração de JWTs com expiração válida, logout, proteção das rotas de agentes e casos com middleware de autenticação, e até endpoints para criação, leitura, atualização e exclusão (CRUD) dos agentes e casos. Isso é um baita avanço! 🎉
 
-- Sua estrutura de diretórios está muito bem organizada, seguindo o padrão MVC com controllers, repositories, middlewares, rotas e utils. Isso é fundamental para escalabilidade e manutenção do projeto. 👏
-- Você implementou corretamente o fluxo de autenticação com JWT, incluindo registro, login e logout, além da proteção das rotas de agentes e casos com middleware. Isso é essencial para uma API segura.
-- Os testes básicos de criação e login de usuários, bem como a proteção das rotas e manipulação dos agentes e casos, passaram com sucesso. Isso mostra que a base da aplicação está sólida.
-- Você também implementou os endpoints bônus como `/usuarios/me` para retornar os dados do usuário autenticado, além da filtragem e busca dos casos — muito bem! 💪
+Além disso, você conseguiu implementar os bônus que envolvem filtros complexos nas rotas de agentes e casos, busca por palavras-chave, e o endpoint `/usuarios/me` para retornar dados do usuário autenticado. Isso mostra que você foi além do básico e entregou funcionalidades que enriquecem muito a aplicação! Muito bom! 🚀✨
 
 ---
 
-## 🚩 Análise dos Testes que Falharam e Oportunidades de Melhoria
+## Agora, vamos conversar sobre os testes que falharam e o que pode estar acontecendo para que eles não passem ainda. Lembre-se: entender a raiz do problema é o caminho para evoluir! 🕵️‍♀️🔍
 
-Você teve algumas falhas importantes relacionadas à validação dos dados na criação de usuários, especialmente para casos de campos vazios, nulos ou com senhas que não atendem aos requisitos mínimos. Isso impacta diretamente a segurança e a robustez da API, por isso vamos focar aqui.
+### Lista dos testes que falharam (relacionados a usuários e IDs inválidos):
 
-### 1. Falhas nos Testes de Validação de Usuário (Erro 400 para campos inválidos)
+- USERS: Recebe erro 400 ao tentar criar um usuário com nome vazio  
+- USERS: Recebe erro 400 ao tentar criar um usuário com nome nulo  
+- USERS: Recebe erro 400 ao tentar criar um usuário com email vazio  
+- USERS: Recebe erro 400 ao tentar criar um usuário com email nulo  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha vazia  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha curta demais  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha sem números  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha sem caractere especial  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letra maiúscula  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letras  
+- USERS: Recebe erro 400 ao tentar criar um usuário com senha nula  
+- USERS: Recebe erro 400 ao tentar criar um usuário com campo faltante  
+- AGENTS: Recebe status code 404 ao tentar atualizar agente por completo com método PUT de agente de ID em formato incorreto  
+- CASES: Recebe status code 404 ao tentar atualizar um caso por completo com método PUT de um caso com ID inválido  
+- CASES: Recebe status code 404 ao tentar atualizar um caso parcialmente com método PATCH de um caso com ID inválido  
 
-Testes que falharam:  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com nome vazio`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com nome nulo`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com email vazio`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com email nulo`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha vazia`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha curta de mais`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha sem números`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha sem caractere especial`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letra maiúscula`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha sem letras`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com senha nula`  
-- `USERS: Recebe erro 400 ao tentar criar um usuário com campo faltante`
+---
 
-#### Causa Raiz
+## Análise detalhada dos erros mais importantes
 
-Seu código do `authController.js` está usando o `zod` para validação com os schemas `registerSchema` e `loginSchema` importados de `userValidations.js`. Porém, o fato de os testes de validação de campos obrigatórios estarem falhando indica que seu schema de validação para o registro não está cobrindo todos os casos de forma estrita, ou que o middleware/validação não está sendo aplicado corretamente antes de tentar criar o usuário.
+### 1. Validação dos dados de usuário no registro (vários testes USERS 400)
 
-Veja um trecho do seu controller:
+Você implementou uma validação usando o `zod` no `authController.js`, o que é ótimo! Porém, os testes indicam que algumas validações de campos obrigatórios e regras de senha não estão sendo capturadas corretamente, por exemplo:
+
+- Nome vazio ou nulo não resulta no erro 400 esperado  
+- Email vazio ou nulo idem  
+- Senha com requisitos mínimos (mínimo 8 caracteres, pelo menos uma letra minúscula, uma maiúscula, número e caractere especial) não está sendo validada corretamente  
+
+No seu `authController.js`, você faz:
 
 ```js
-const result = registerSchema.safeParse(req.body);
+const result = registerSchema.safeParse(dados);
 if (!result.success) {
     throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
 }
 ```
 
-Isso está correto, mas o problema pode estar no schema `registerSchema` em `userValidations.js`. Se ele não valida adequadamente os campos `nome`, `email` e `senha` com as regras exigidas (especialmente para a senha, que deve conter letras maiúsculas, minúsculas, números e caracteres especiais), os erros não serão capturados.
+Isso está correto, mas o problema provavelmente está no seu schema `registerSchema` no arquivo `utils/userValidations.js` (que não foi enviado aqui, mas podemos supor que é onde está a validação do `zod`).
 
-#### O que revisar e corrigir:
+**Possível causa raiz:**  
+- O schema do `zod` pode não estar cobrindo todos os casos de validação da senha, ou o campo `nome` e `email` podem estar aceitando valores vazios (`""`) ou nulos (`null`) sem erro.  
+- Além disso, no controller você faz um ajuste manual para preencher `null` se o campo estiver `undefined`, o que pode estar mascarando algum problema na validação.
 
-- **Validação do schema `registerSchema`**: Certifique-se que o schema está exigindo que:
-  - `nome` seja string não vazia e não nula.
-  - `email` seja string, formato válido e não vazio.
-  - `senha` tenha pelo menos 8 caracteres, com pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial.
-
-- **Exemplo de validação de senha com Zod**:
+**O que fazer:**  
+- Certifique-se que o schema do `zod` está validando corretamente todos os requisitos, por exemplo, para a senha:
 
 ```js
-const senhaRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+senha: z.string()
+  .min(8, "A senha deve ter no mínimo 8 caracteres")
+  .regex(/[a-z]/, "A senha deve conter pelo menos uma letra minúscula")
+  .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula")
+  .regex(/[0-9]/, "A senha deve conter pelo menos um número")
+  .regex(/[^a-zA-Z0-9]/, "A senha deve conter pelo menos um caractere especial")
+```
+
+- Para os campos `nome` e `email`, garanta que eles não aceitam strings vazias ou nulas:
+
+```js
+nome: z.string().min(1, "O nome é obrigatório"),
+email: z.string().email("Email inválido").min(1, "O email é obrigatório"),
+```
+
+- Evite passar `null` para o `zod` para campos obrigatórios, deixe o próprio schema cuidar disso.
+
+---
+
+### 2. Validação de IDs inválidos em agentes e casos (testes com status 404)
+
+Os testes indicam que ao atualizar agentes ou casos com IDs inválidos (ex: strings não numéricas, números negativos ou zero), o sistema deve retornar 404.
+
+No seu código, por exemplo em `controllers/agentesController.js`, a função `updateAgente` faz:
+
+```js
+const idNum = Number(id);
+
+if (!Number.isInteger(idNum) || idNum <= 0) {
+    throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
+}
+```
+
+Isso está correto e deve funcionar. Porém, no `updatePartialCaso` do `casosController.js`, você faz:
+
+```js
+if (!id || !/^\d+$/.test(id)) {
+    throw new AppError(404, 'ID inválido');
+}
+```
+
+Aqui você está validando o ID parcialmente com regex, mas depois usa o ID sem converter para número e sem verificar se é maior que zero. Isso pode gerar inconsistência.
+
+Além disso, no método `getAgenteByCasoId` do `casosController.js`, você usa `req.params.caso_id`, mas na rota `routes/casosRoutes.js` o parâmetro é `:id`:
+
+```js
+const casoId = req.params.caso_id;
+```
+
+Isso pode gerar `undefined` e falhas, já que o parâmetro correto é `id`.
+
+**O que fazer:**  
+- Padronize a validação do ID para converter para número e verificar se é inteiro positivo em todos os controllers. Exemplo:
+
+```js
+const idNum = Number(id);
+if (!Number.isInteger(idNum) || idNum <= 0) {
+    throw new AppError(404, 'ID inválido: deve ser um número inteiro positivo');
+}
+```
+
+- Verifique se o nome do parâmetro na rota e no controller batem exatamente (ex: `id` vs `caso_id`). Corrija para usar `req.params.id` no método `getAgenteByCasoId`.
+
+---
+
+### 3. Validação da senha no schema e no controller
+
+No `authController.js`, você faz uma validação manual para campos extras e corpo vazio, o que é ótimo para segurança. Porém, o fato de o teste falhar para vários casos de senha indica que o schema pode estar incompleto ou que o tratamento no controller está mascarando erros.
+
+**Dica:** Você pode melhorar o tratamento no controller para não substituir `undefined` por `null`, e deixar o `zod` validar exatamente o que está chegando.
+
+---
+
+### 4. Estrutura dos diretórios
+
+Sua estrutura está muito bem organizada e segue exatamente o que foi pedido no desafio. Parabéns por isso! Isso facilita muito a manutenção e a escalabilidade do projeto. 👍
+
+---
+
+## Recomendações de aprendizado para você:
+
+- Para aprimorar as validações com `zod`, recomendo fortemente este vídeo, feito pelos meus criadores, que explica muito bem como usar schemas para validar dados no backend e garantir a segurança da API:  
+https://www.youtube.com/watch?v=Q4LQOfYwujk
+
+- Para entender melhor como usar JWT e bcrypt de forma segura e correta, este vídeo é excelente:  
+https://www.youtube.com/watch?v=L04Ln97AwoY
+
+- Se quiser reforçar a organização do seu projeto com arquitetura MVC e boas práticas, este vídeo é uma ótima referência:  
+https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+
+---
+
+## Exemplo prático para corrigir o schema do usuário (em `utils/userValidations.js`):
+
+```js
+const { z } = require('zod');
 
 const registerSchema = z.object({
   nome: z.string().min(1, "O nome é obrigatório"),
   email: z.string().email("Email inválido"),
   senha: z.string()
     .min(8, "A senha deve ter no mínimo 8 caracteres")
-    .regex(senhaRegex, "A senha deve conter letras maiúsculas, minúsculas, números e caracteres especiais"),
+    .regex(/[a-z]/, "A senha deve conter pelo menos uma letra minúscula")
+    .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[0-9]/, "A senha deve conter pelo menos um número")
+    .regex(/[^a-zA-Z0-9]/, "A senha deve conter pelo menos um caractere especial"),
 });
 ```
 
-- **Aplicação do schema**: Garanta que o schema está sendo importado e usado corretamente no controller.
-
----
-
-### 2. Testes com IDs Inválidos para Agentes e Casos (Status 404 esperado, mas recebeu diferente)
-
-Testes que falharam:  
-- `AGENTS: Recebe status 404 ao tentar buscar um agente com ID em formato inválido`  
-- `AGENTS: Recebe status code 404 ao tentar atualizar agente por completo com método PUT de agente de ID em formato incorreto`  
-- `AGENTS: Recebe status code 404 ao tentar deletar agente com ID inválido`  
-- `CASES: Recebe status code 404 ao tentar buscar um caso por ID inválido`  
-- `CASES: Recebe status code 404 ao tentar atualizar um caso por completo com método PUT de um caso com ID inválido`  
-- `CASES: Recebe status code 404 ao tentar atualizar um caso parcialmente com método PATCH de um caso com ID inválido`
-
-#### Causa Raiz
-
-No seu código, você tem funções de validação para IDs, como `isValidId(id)` no controller de agentes e casos, que verificam se o ID é inteiro positivo:
+E no controller, você pode simplificar para:
 
 ```js
-function isValidId(id) {
-    const num = Number(id);
-    return Number.isInteger(num) && num > 0;
+const result = registerSchema.safeParse(req.body);
+if (!result.success) {
+    throw new AppError(400, 'Dados inválidos', result.error.errors.map(e => e.message));
 }
+const { nome, email, senha } = result.data;
 ```
 
-Porém, o erro 404 indica que, para IDs inválidos, o sistema está retornando 404 (não encontrado). O teste espera isso, mas você pode estar retornando outro código, ou não está lançando um erro que resulte em 404.
-
-**Mas olhando seu código, você lança `AppError(400, 'ID inválido')` para IDs inválidos, e 404 para IDs inexistentes.**
-
-O problema é que os testes esperam erro 404 para IDs inválidos (formato incorreto), mas seu código retorna 400 (bad request).
-
-**Exemplo:**
-
-```js
-if (!isValidId(id)) {
-    throw new AppError(400, 'ID inválido: deve ser um número inteiro positivo');
-}
-```
-
-Aqui você retorna 400, mas o teste espera 404.
-
-#### O que revisar e corrigir:
-
-- Confirme a especificação do desafio para o tratamento de IDs inválidos. Se o teste espera 404 para IDs inválidos (não existentes ou formato inválido), você deve lançar 404 nesses casos.
-
-- Caso o teste esteja correto, ajuste seu código para lançar `AppError(404, 'ID inválido')` ou uma mensagem apropriada.
-
-- Essa diferença entre 400 e 404 pode parecer sutil, mas é importante para o contrato da API e para os testes.
+Assim, o `zod` se encarrega de validar tudo, inclusive campos ausentes ou vazios.
 
 ---
 
-### 3. Outras Observações
+## Resumo rápido do que focar para melhorar:
 
-- Seu middleware de autenticação está bem implementado, tratando token via cookie ou header, verificando validade do JWT e adicionando `req.user`. Excelente!
-
-- A migration para criar a tabela `usuarios` está correta e contempla os campos necessários.
-
-- A documentação no `INSTRUCTIONS.md` está clara e bem estruturada, incluindo exemplos para registro, login e uso do token JWT.
-
----
-
-## 💡 Recomendações de Recursos para Aprimorar
-
-- Para fortalecer a validação com Zod e evitar falhas nos testes de usuário, recomendo fortemente este vídeo, feito pelos meus criadores, que fala muito bem sobre autenticação e validação:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk
-
-- Para entender melhor o uso prático de JWT e bcrypt, que são fundamentais para segurança, dê uma olhada neste vídeo:  
-  https://www.youtube.com/watch?v=L04Ln97AwoY
-
-- Caso queira aprimorar ainda mais suas queries com Knex e a organização das migrations, veja este guia detalhado:  
-  https://www.youtube.com/watch?v=dXWy_aGCW1E
+- [ ] Revisar e corrigir o schema de validação dos usuários para garantir que campos obrigatórios e regras de senha sejam corretamente validados (sem aceitar valores vazios ou nulos).  
+- [ ] Padronizar a validação de IDs em todos os controllers, convertendo para número, verificando se é inteiro positivo e tratando erros com status 404.  
+- [ ] Corrigir inconsistência no uso dos parâmetros das rotas (ex: `caso_id` vs `id`) para evitar `undefined` e erros na busca.  
+- [ ] Simplificar o tratamento no controller para deixar o `zod` validar diretamente o corpo da requisição, evitando manipulações que possam mascarar erros.  
+- [ ] Continuar usando o middleware de autenticação e proteção de rotas como está, pois está bem implementado!  
 
 ---
 
-## 📋 Resumo dos Principais Pontos para Focar
+Eduarda, você está no caminho certo! 💪 A segurança e validação são pontos que exigem atenção especial, e com esses ajustes seu projeto vai ficar ainda mais robusto e profissional. Continue firme, aprendendo e aprimorando seu código! 🚀
 
-- **Ajustar o schema de validação do usuário (`registerSchema`) para garantir que campos `nome`, `email` e `senha` sejam validados rigorosamente, especialmente a senha com regex que cobre maiúsculas, minúsculas, números e caracteres especiais.**
+Se precisar, volte a estudar os vídeos que recomendei e qualquer dúvida, estou aqui para ajudar! 😉
 
-- **Revisar o tratamento dos códigos de erro para IDs inválidos em agentes e casos, alinhando-os com o esperado nos testes (provavelmente 404 para IDs inválidos em vez de 400).**
-
-- **Garantir que as validações sejam aplicadas antes de tentar criar ou atualizar dados no banco para evitar erros silenciosos ou comportamentos inesperados.**
-
-- **Continuar mantendo a organização do projeto e a documentação clara, pois isso é um diferencial muito positivo!**
-
----
-
-Eduarda, você está no caminho certo e já entregou uma base muito sólida! 💪 Com esses ajustes de validação e alinhamento dos códigos de resposta, sua aplicação ficará ainda mais robusta e profissional. Continue assim, aprendendo e evoluindo! Estou aqui torcendo pelo seu sucesso e disponível para ajudar no que precisar. 🚀✨
-
-Um abraço e até a próxima revisão! 👋😊
+Um abraço e sucesso! 🌟✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
